@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://policies-preferences.invalid/schema/decisions.schema.json",
+  "title": "The owner's review decisions, applied by `pp apply-decisions`",
+  "type": "object",
+  "required": [
+    "reviewer",
+    "decisions"
+  ],
+  "properties": {
+    "reviewer": {"type": "string", "pattern": "^[a-z][a-z0-9_-]*$"},
+    "reviewed_at": {
+      "type": "string"
+    },
+    "reviewing": {
+      "type": "object",
+      "properties": {
+        "policies": {
+          "type": "string"
+        },
+        "preferences": {
+          "type": "string"
+        }
+      }
+    },
+    "bump": {
+      "enum": [
+        "patch",
+        "minor",
+        "major"
+      ],
+      "description": "Raise every touched file to at least this level."
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "action"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "action": {
+            "enum": [
+              "",
+              "approve",
+              "reject",
+              "edit",
+              "retire",
+              "reactivate",
+              "feedback",
+              "approve-revision",
+              "reject-revision"
+            ]
+          },
+          "rev": {
+            "type": "string",
+            "pattern": "^R\\d+$"
+          },
+          "rule": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "applies_to": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "polarity": {
+            "enum": [
+              "prohibitive",
+              "directive"
+            ]
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "supersedes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "breaking": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string"
+          },
+          "_hint": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "new_policies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "title",
+          "rule"
+        ]
+      }
+    },
+    "new_preferences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "title",
+          "rule"
+        ]
+      }
+    }
+  },
+  "$defs": {}
+}

@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://policies-preferences.invalid/schema/preferences.schema.json",
+  "title": "Grok Bot preferences (how the owner wants their Grok bots to do their assigned work)",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "kind",
+    "version",
+    "updated",
+    "owner",
+    "preferences"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "preferences"
+    },
+    "version": {
+      "$ref": "policies.schema.json#/$defs/semver"
+    },
+    "updated": {
+      "type": "string",
+      "format": "date"
+    },
+    "owner": {"type": "string", "pattern": "^[a-z][a-z0-9_-]*$"},
+    "reviewed": {
+      "$ref": "policies.schema.json#/$defs/reviewStamp"
+    },
+    "preferences": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/preference"
+      }
+    }
+  },
+  "$defs": {
+    "preference": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "rule",
+        "applies_to",
+        "status",
+        "source"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^(EXAMPLE-)?PREF-\\d{3,}$"
+        },
+        "example": {
+          "type": "boolean",
+          "description": "Format example; never loaded."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "rule": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "applies_to": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "enum": [
+            "proposed",
+            "active",
+            "retired",
+            "rejected"
+          ]
+        },
+        "source": {
+          "type": "object",
+          "required": [
+            "kind",
+            "by",
+            "at",
+            "evidence"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "stated",
+                "learned"
+              ],
+              "description": "stated = the owner said it outright; learned = inferred from their corrections or choices."
+            },
+            "by": {
+              "type": "string",
+              "description": "Who proposed or recorded it."
+            },
+            "at": {
+              "type": "string"
+            },
+            "evidence": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "reviewed": {
+          "$ref": "policies.schema.json#/$defs/reviewStamp"
+        },
+        "added_in": {
+          "$ref": "policies.schema.json#/$defs/semver"
+        },
+        "supersedes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^PREF-\\d{3,}$"
+          }
+        },
+        "pending_revisions": {
+          "type": "array",
+          "items": {
+            "$ref": "policies.schema.json#/$defs/revision"
+          }
+        },
+        "history": {
+          "$ref": "policies.schema.json#/$defs/history"
+        }
+      }
+    }
+  }
+}

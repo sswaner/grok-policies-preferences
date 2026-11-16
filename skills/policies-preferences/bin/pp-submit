@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# pp-submit: put pending preferences changes on a pp/* branch and open a PR for the owner.
+# Bots never push to main. The owner approves by merging (human in the loop).
+#
+#   pp-submit [--by <bot-slug>] --title "<PR title>" [--decisions] [--body-extra "<text>"]
+#
+#   --by          defaults to $PP_BOT
+#   --decisions   the change applies the owner's decisions file (skips the bot-only check-diff)
+# Run from a fresh worktree (or clone) of origin/main, e.g. a detached `git worktree add`.
+set -euo pipefail
+HERE="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+PP="$HERE/pp"
+BY="${PP_BOT:-}" TITLE="" DECISIONS=0 EXTRA=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --by) BY="$2"; shift 2 ;;
+    --title) TITLE="$2"; shift 2 ;;
+    --decisions) DECISIONS=1; shift ;;
+    --body-extra) EXTRA="$2"; shift 2 ;;
+    -h|--help) sed -n 2,10p "$0"; exit 0 ;;
+    *) echo "pp-submit: unknown arg $1" >&2; exit 2 ;;
+  esac
+done
+[[ "$BY" =~ ^[a-z][a-z0-9_-]*$ ]] || { echo "pp-submit: --by <bot-slug> required (or set PP_BOT)" >&2; exit 2; }
+[[ -n "$TITLE" ]] || { echo "pp-submit: --title required" >&2; exit 2; }
+
+TOP="$("$PP" config --get source_dir)"
+HOME_ABS="$("$PP" config --get home)"
+OWNER_NAME="$("$PP" config --get owner_name)"
+cd "$TOP"
+TOP="$(git rev-parse --show-toplevel)"
+HOMEREL="$(realpath --relative-to="$TOP" "$HOME_ABS")"
+[[ -n "$(git status --porcelain -- "$HOMEREL")" ]] || { echo "pp-submit: no changes under $HOMEREL/" >&2; exit 1; }
+if [[ -n "$(git status --porcelain | grep -v " ${HOMEREL}/" || true)" ]]; then
+  echo "pp-submit: changes outside $HOMEREL/; commit or stash them first" >&2; exit 1
+fi
+"$PP" validate >/dev/null
+if [[ $DECISIONS -eq 0 ]]; then
+  "$PP" check-diff --base HEAD
+fi
+
+BRANCH="pp/${BY}-$(date +%Y%m%d-%H%M%S)"
+START="$(git rev-parse --abbrev-ref HEAD)"
+IDENT=()
+git config user.email >/dev/null || IDENT=(-c "user.name=${BY} (Grok Bot)" -c "user.email=${BY}@users.noreply.github.com")
+git switch -q -c "$BRANCH"
+git add "$HOMEREL"
+git "${IDENT[@]}" commit -qm "$TITLE" -m "Submitted by ${BY} via pp-submit. $("$PP" cite)"
+git push -q -u origin "$BRANCH"
+CL="$(awk '/^## /{n++} n==1{print} n==2{exit}' "$HOMEREL/CHANGELOG.md")"
+BODY="$(printf 'Submitted by **%s** for %s'\''s approval. Merging = approval; closing = rejection.\n\nResulting set: %s\n\n%s\n\n%s\n' \
+  "$BY" "$OWNER_NAME" "$("$PP" cite)" "$CL" "$EXTRA")"
+URL="$(gh pr create --base main --head "$BRANCH" --title "$TITLE" --body "$BODY")"
+if [[ "$START" == "HEAD" ]]; then git switch -q --detach "$BRANCH"; else git switch -q "$START"; fi
+echo "$URL"

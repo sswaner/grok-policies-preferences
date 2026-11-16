@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://policies-preferences.invalid/schema/policies.schema.json",
+  "title": "Grok Bot policies (constitutional guidance set by the owner alone)",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "kind",
+    "version",
+    "updated",
+    "owner",
+    "scopes",
+    "policies"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "policies"
+    },
+    "version": {
+      "$ref": "#/$defs/semver"
+    },
+    "updated": {
+      "type": "string",
+      "format": "date"
+    },
+    "owner": {"type": "string", "pattern": "^[a-z][a-z0-9_-]*$"},
+    "reviewed": {
+      "$ref": "#/$defs/reviewStamp"
+    },
+    "scopes": {
+      "type": "object",
+      "description": "Strict registry of scope names (names, not IDs, so humans can participate). Preferences may only use names defined here.",
+      "required": [
+        "all"
+      ],
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_-]*$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "all",
+              "role",
+              "bot"
+            ]
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "policies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/policy"
+      }
+    }
+  },
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "reviewStamp": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "by": {"type": "string", "pattern": "^[a-z][a-z0-9_-]*$"},
+        "at": {
+          "type": "string"
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "revision": {
+      "type": "object",
+      "required": [
+        "rev",
+        "status",
+        "at",
+        "by",
+        "note"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "rev": {
+          "type": "string",
+          "pattern": "^R\\d+$"
+        },
+        "status": {
+          "enum": [
+            "pending",
+            "applied",
+            "rejected"
+          ]
+        },
+        "at": {
+          "type": "string"
+        },
+        "by": {
+          "type": "string",
+          "description": "Who recorded the feedback (bot or owner)."
+        },
+        "from": {
+          "type": "string",
+          "description": "Whose feedback it is (normally the owner)."
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proposed_rule": {
+          "type": "string",
+          "description": "Replacement text. On a policy only the owner may supply it."
+        },
+        "drafted_by": {
+          "type": "string"
+        }
+      }
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "at",
+          "action",
+          "by"
+        ],
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "action": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "rule",
+        "polarity",
+        "applies_to",
+        "status",
+        "set_by"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^(EXAMPLE-)?POL-\\d{3,}$"
+        },
+        "example": {
+          "type": "boolean",
+          "description": "Format example; never loaded."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "rule": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "The directive, in prose a bot reads literally."
+        },
+        "polarity": {
+          "enum": [
+            "prohibitive",
+            "directive"
+          ],
+          "description": "prohibitive = do not X; directive = do X."
+        },
+        "applies_to": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "rationale": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "status": {
+          "enum": [
+            "active",
+            "retired"
+          ]
+        },
+        "set_by": {"type": "string", "pattern": "^[a-z][a-z0-9_-]*$"},
+        "added_in": {
+          "$ref": "#/$defs/semver"
+        },
+        "reviewed": {
+          "$ref": "#/$defs/reviewStamp"
+        },
+        "supersedes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "pending_revisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/revision"
+          }
+        },
+        "history": {
+          "$ref": "#/$defs/history"
+        }
+      }
+    }
+  }
+}

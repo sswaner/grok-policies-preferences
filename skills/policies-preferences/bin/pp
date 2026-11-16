@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# pp: policies & preferences CLI wrapper. Picks a Python that has PyYAML:
+#   $PP_PYTHON, then the venv made by install.sh, then python3.
+set -euo pipefail
+HERE="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+VENV="${XDG_DATA_HOME:-$HOME/.local/share}/policies-preferences/venv"
+PY="${PP_PYTHON:-}"
+if [[ -z "$PY" ]]; then
+  if [[ -x "$VENV/bin/python" ]]; then PY="$VENV/bin/python"; else PY="python3"; fi
+fi
+exec "$PY" "$HERE/../lib/pp.py" "$@"
